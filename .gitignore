@@ -1,0 +1,25 @@
+# dependencies
+node_modules
+
+# next
+.next
+out
+
+# nest
+dist
+
+# env files
+.env
+.env.local
+.env.development
+.env.production
+
+# logs
+*.log
+
+# docker volumes
+docker-data
+
+# OS
+.DS_Store
+Thumbs.db
