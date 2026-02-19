@@ -1,4 +1,4 @@
-# DeenCraft 🕌✨  
+# DeenKraft 🕌✨  
 **DeenCraft** is an Islamic content studio built to help creators produce meaningful social media videos faster — while staying authentic to Deen.
 
 ---
