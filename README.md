@@ -1,4 +1,5 @@
-# DeenKraft 🕌✨  
+# DeenKraft 🕌✨
+
 **DeenKraft** is an Islamic content studio built to help creators produce meaningful social media videos faster — while staying authentic to Deen.
 
 ---
@@ -6,6 +7,7 @@
 ## Core Features
 
 ### 🎬 Clips Library + Smart Tagging
+
 - Upload and store short video clips in one place
 - Tag clips by:
   - Topic (Tawakkul, Sabr, Ramadan, Umrah, etc.)
@@ -18,6 +20,7 @@
 ---
 
 ### 🎧 Audio Library + Tagging
+
 - Store nasheeds, recitations, ambience, and voiceovers
 - Tag audio using the same system as clips
 - Easily match audio mood with video scenes
@@ -26,6 +29,7 @@
 ---
 
 ### 🖼 Template Library (Reusable Reel Layouts)
+
 - Create reusable reel templates using HTML/CSS
 - Define structured variables for each template
 - Preview templates before using them
@@ -34,6 +38,7 @@
 ---
 
 ### 🤖 Idea → Script → Structured Content
+
 - Start with a raw idea or reminder
 - Generate structured scene content for templates
 - Ensure consistency in:
@@ -45,6 +50,7 @@
 ---
 
 ### 🎞 Reel Builder (Scene-Based Video Creation)
+
 - Build reels scene by scene
 - Select clips for each scene
 - Attach overlay templates with text
@@ -54,6 +60,7 @@
 ---
 
 ### ⚙️ Automated Rendering Pipeline
+
 - Convert templates into overlay visuals
 - Combine clips, overlays, and audio automatically
 - Export final video ready for Instagram or TikTok
@@ -62,6 +69,7 @@
 ---
 
 ### 🧠 Social Media Idea Tracker
+
 - Capture content ideas anytime
 - Track progress:
   - Idea → Scripted → Produced → Published
@@ -72,6 +80,7 @@
 ---
 
 ### 🕌 Content Integrity Support
+
 - Encourage use of authentic Qur’an/Hadith references
 - Allow reminders without citations when needed
 - Keep messaging respectful, meaningful, and intentional
@@ -81,11 +90,11 @@
 
 ## What DeenCraft Helps You Do
 
-- Turn scattered clips into organized content assets  
-- Turn ideas into structured videos quickly  
-- Maintain consistent Islamic branding and tone  
-- Produce reels without editing from scratch every time  
-- Build a long-term Islamic content system, not just one-off posts  
+- Turn scattered clips into organized content assets
+- Turn ideas into structured videos quickly
+- Maintain consistent Islamic branding and tone
+- Produce reels without editing from scratch every time
+- Build a long-term Islamic content system, not just one-off posts
 
 ---
 

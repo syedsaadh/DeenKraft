@@ -1,21 +1,35 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsString, IsOptional, IsNumber } from 'class-validator';
+import { IsString, IsArray, IsNumber, IsOptional } from 'class-validator';
 
 export class CreateAssetDto {
   @IsString()
-  @ApiProperty({ example: 'clip' })
-  type: string;
+  @ApiProperty()
+  storageKey: string;
+
+  @IsString()
+  @ApiProperty()
+  mimeType: string;
+
+  @IsString()
+  @ApiProperty()
+  originalName: string;
+
+  @IsNumber()
+  @ApiProperty()
+  size: number;
+
+  @IsOptional()
+  @IsArray()
+  @ApiProperty({ type: [String], required: false })
+  tags?: string[];
+
+  @IsOptional()
+  @IsString()
+  @ApiProperty({ required: false, description: 'clip | audio' })
+  type?: string;
 
   @IsOptional()
   @IsNumber()
-  @ApiProperty({ example: 120, required: false })
+  @ApiProperty({ required: false })
   duration?: number;
-
-  @IsString()
-  @ApiProperty({ example: 'videos/test.mp4' })
-  storage_key: string;
-
-  @IsOptional()
-  @ApiProperty({ type: Object, required: false })
-  metadata?: any;
 }

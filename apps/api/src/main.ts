@@ -14,7 +14,14 @@ async function bootstrap() {
     .setTitle('DeenCraft API')
     .setDescription('Media Upload Backend')
     .setVersion('1.0')
-    .addBearerAuth() // JWT support in Swagger
+    .addBearerAuth(
+      {
+        type: 'http',
+        scheme: 'bearer',
+        bearerFormat: 'JWT',
+      },
+      'access-token',
+    ) // JWT support in Swagger
     .build();
 
   const document = SwaggerModule.createDocument(app, config);
@@ -22,4 +29,4 @@ async function bootstrap() {
 
   await app.listen(process.env.PORT ?? 3001);
 }
-bootstrap();
+void bootstrap();

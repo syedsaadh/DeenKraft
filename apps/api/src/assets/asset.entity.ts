@@ -1,18 +1,41 @@
-import { Entity, PrimaryGeneratedColumn, Column, ManyToMany, JoinTable } from 'typeorm';
-import { Tag } from '../tags/tag.entity';
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  ManyToMany,
+  JoinTable,
+  CreateDateColumn,
+} from 'typeorm';
+import { Tag } from 'src/tags/tag.entity';
 import { ApiProperty } from '@nestjs/swagger';
-import { CreateDateColumn } from 'typeorm';
 import { Index } from 'typeorm';
 
 @Entity()
-
+@Index(['type', 'createdAt']) // composite index
 export class Asset {
-  @CreateDateColumn()
-  createdAt: Date;
+  @ApiProperty()
+  @PrimaryGeneratedColumn('uuid')
+  id: string;
 
   @ApiProperty()
-  @PrimaryGeneratedColumn()
-  id: number;
+  @Column()
+  originalName: string;
+
+  @ApiProperty()
+  @Column()
+  storageKey: string;
+
+  @ApiProperty()
+  @Column()
+  mimeType: string;
+
+  @ApiProperty()
+  @Column({ type: 'bigint' })
+  size: number;
+
+  @ApiProperty()
+  @Column()
+  userId: string;
 
   @ApiProperty()
   @Column()
@@ -22,15 +45,10 @@ export class Asset {
   @Column({ nullable: true })
   duration: number;
 
-  @ApiProperty()
-  @Column()
-  storage_key: string;
-
-  @ApiProperty({ type: Object, required: false })
-  @Column({ type: 'json', nullable: true })
-  metadata: any;
-
   @ManyToMany(() => Tag, (tag) => tag.assets)
   @JoinTable()
   tags: Tag[];
+
+  @CreateDateColumn()
+  createdAt: Date;
 }

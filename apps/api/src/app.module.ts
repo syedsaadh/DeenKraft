@@ -3,28 +3,29 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AuthModule } from './auth/auth.module';
-import { Asset } from './assets/asset.entity';
-import { Tag } from './tags/tag.entity';
 import { AssetsModule } from './assets/assets.module';
+import { TagsModule } from './tags/tag.module';
+import { StorageModule } from './storage/storage.module';
+import { ConfigModule } from '@nestjs/config';
+import { databaseConfig } from './config/database.config';
 
 @Module({
   imports: [
-    TypeOrmModule.forRoot({
-      type: 'mysql',
-      host: 'localhost',
-      port: 3307,
-      username: 'root',
-      password: 'root',
-      database: 'app',
-      autoLoadEntities: true,
-      synchronize: true,
-      entities: [Asset, Tag],
+    ConfigModule.forRoot({
+      isGlobal: true, // makes config available everywhere
+      envFilePath: '.env',
     }),
+
+    TypeOrmModule.forRootAsync({
+      useFactory: databaseConfig,
+    }),
+
     AuthModule,
     AssetsModule,
+    StorageModule,
+    TagsModule,
   ],
   controllers: [AppController],
   providers: [AppService],
 })
-
 export class AppModule {}
