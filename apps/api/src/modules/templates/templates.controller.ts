@@ -9,7 +9,7 @@ import {
   Post,
   Query,
 } from '@nestjs/common';
-import { ApiOperation, ApiTags } from '@nestjs/swagger';
+import { ApiBody, ApiOperation, ApiParam, ApiTags } from '@nestjs/swagger';
 import { CreateTemplateDto } from './dto/create-template.dto';
 import { PreviewTemplateDto } from './dto/preview-template.dto';
 import { RenderTemplateDto } from './dto/render-template.dto';
@@ -56,12 +56,64 @@ export class TemplatesController {
 
   @Post(':id/preview')
   @ApiOperation({ summary: 'Render template preview with variables' })
+  @ApiParam({
+    name: 'id',
+    description: 'Template ID (equivalent to templateId in request context)',
+  })
+  @ApiBody({
+    description:
+      'Template preview payload for variable validation and rendering',
+    schema: {
+      type: 'object',
+      properties: {
+        templateId: {
+          type: 'string',
+          description: 'Optional request context copy of :id path param',
+          example: '8d11fb91-a767-4223-b5bb-a9f8147cae28',
+        },
+        variables: {
+          type: 'object',
+          example: {
+            quote: 'Allah is Most Merciful',
+            author: 'Quran 39:53',
+          },
+        },
+      },
+      required: ['variables'],
+    },
+  })
   previewTemplate(@Param('id') id: string, @Body() dto: PreviewTemplateDto) {
     return this.templatesService.previewTemplate(id, dto.variables);
   }
 
   @Post(':id/render')
   @ApiOperation({ summary: 'Render template image and upload to storage' })
+  @ApiParam({
+    name: 'id',
+    description: 'Template ID (equivalent to templateId in request context)',
+  })
+  @ApiBody({
+    description:
+      'Template render payload for variable validation and PNG generation',
+    schema: {
+      type: 'object',
+      properties: {
+        templateId: {
+          type: 'string',
+          description: 'Optional request context copy of :id path param',
+          example: '8d11fb91-a767-4223-b5bb-a9f8147cae28',
+        },
+        variables: {
+          type: 'object',
+          example: {
+            quote: 'Allah is Most Merciful',
+            author: 'Quran 39:53',
+          },
+        },
+      },
+      required: ['variables'],
+    },
+  })
   renderTemplate(@Param('id') id: string, @Body() dto: RenderTemplateDto) {
     return this.templatesService.renderTemplateToImage(id, dto.variables);
   }

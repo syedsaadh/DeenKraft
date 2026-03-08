@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Inject,
   Injectable,
   InternalServerErrorException,
@@ -12,6 +13,7 @@ import { Repository } from 'typeorm';
 import { STORAGE_PROVIDER } from '../storage/storage.constants';
 import type { StorageProvider } from '../storage/storage.interface';
 import { TemplateRendererService } from './template-renderer.service';
+import { validateAgainstSchema } from '../../common/validation/schema-validator';
 import { CreateTemplateDto } from './dto/create-template.dto';
 import { UpdateTemplateDto } from './dto/update-template.dto';
 import { Template } from './template.entity';
@@ -75,6 +77,7 @@ export class TemplatesService {
 
   async previewTemplate(id: string, variables: Record<string, unknown>) {
     const template = await this.getTemplateById(id);
+    this.validateTemplateVariables(template, variables);
     const renderedHtml = this.render(template.html, variables);
     return {
       id: template.id,
@@ -91,6 +94,7 @@ export class TemplatesService {
     }
 
     const template = await this.getTemplateById(id);
+    this.validateTemplateVariables(template, variables);
     const renderedHtml = this.render(template.html, variables);
     const pngBuffer =
       await this.templateRendererService.renderHtmlToPng(renderedHtml);
@@ -139,6 +143,85 @@ export class TemplatesService {
     }
 
     return JSON.stringify(value);
+  }
+
+  private validateTemplateVariables(
+    template: Template,
+    variables: Record<string, unknown>,
+  ): void {
+    if (!this.isPlainObject(variables)) {
+      throw new BadRequestException({
+        statusCode: 400,
+        message: 'Template variables validation failed',
+        errors: [
+          {
+            field: 'variables',
+            message: 'must be a JSON object',
+          },
+        ],
+      });
+    }
+
+    const schema = this.normalizeVariableSchema(template.variableSchema);
+    if (!schema) {
+      return;
+    }
+
+    const result = validateAgainstSchema(schema, variables);
+    if (result.valid) {
+      return;
+    }
+
+    throw new BadRequestException({
+      statusCode: 400,
+      message: 'Template variables validation failed',
+      errors: result.errors,
+    });
+  }
+
+  private normalizeVariableSchema(
+    schema: unknown,
+  ): Record<string, unknown> | null {
+    if (!this.isPlainObject(schema)) {
+      return null;
+    }
+
+    if (
+      'type' in schema ||
+      'properties' in schema ||
+      'required' in schema ||
+      '$schema' in schema
+    ) {
+      return schema;
+    }
+
+    const properties = Object.entries(schema).reduce<Record<string, unknown>>(
+      (acc, [key, value]) => {
+        if (typeof value === 'string') {
+          acc[key] = { type: value };
+          return acc;
+        }
+
+        if (this.isPlainObject(value)) {
+          acc[key] = value;
+          return acc;
+        }
+
+        acc[key] = {};
+        return acc;
+      },
+      {},
+    );
+
+    return {
+      type: 'object',
+      properties,
+      additionalProperties: true,
+    };
+  }
+
+  private isPlainObject(value: unknown): value is Record<string, unknown> {
+    return typeof value === 'object' && value !== null && !Array.isArray(value);
   }
 
   private buildPreviewUrl(storageKey: string): string {

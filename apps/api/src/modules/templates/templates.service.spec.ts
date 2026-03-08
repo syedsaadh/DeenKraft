@@ -2,7 +2,10 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { ConfigService } from '@nestjs/config';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { InternalServerErrorException } from '@nestjs/common';
+import {
+  BadRequestException,
+  InternalServerErrorException,
+} from '@nestjs/common';
 import { STORAGE_PROVIDER } from '../storage/storage.constants';
 import { TemplateRendererService } from './template-renderer.service';
 import { Template } from './template.entity';
@@ -142,6 +145,64 @@ describe('TemplatesService', () => {
 
       expect(result.renderedHtml).toBe('<h1>Only Title</h1><p>{{author}}</p>');
     });
+
+    it('should throw BadRequestException when variables fail JSON schema validation', async () => {
+      repository.findOne?.mockResolvedValue({
+        id: 'tmpl-validation-1',
+        name: 'Schema Template',
+        html: '<h1>{{quote}}</h1><p>{{author}}</p>',
+        variableSchema: {
+          type: 'object',
+          required: ['quote', 'author'],
+          properties: {
+            quote: { type: 'string', maxLength: 20 },
+            author: { type: 'string', maxLength: 10 },
+          },
+        },
+      });
+
+      await expect(
+        service.previewTemplate('tmpl-validation-1', {
+          quote: 'This quote is longer than allowed by schema',
+        }),
+      ).rejects.toBeInstanceOf(BadRequestException);
+    });
+
+    it('should throw structured errors for invalid variable structure', async () => {
+      expect.assertions(4);
+
+      repository.findOne?.mockResolvedValue({
+        id: 'tmpl-validation-2',
+        name: 'Schema Template',
+        html: '<h1>{{quote}}</h1>',
+        variableSchema: {
+          type: 'object',
+          required: ['quote'],
+          properties: {
+            quote: { type: 'string', maxLength: 10 },
+          },
+        },
+      });
+
+      try {
+        await service.previewTemplate('tmpl-validation-2', {
+          quote: 123,
+        } as unknown as Record<string, unknown>);
+      } catch (error) {
+        expect(error).toBeInstanceOf(BadRequestException);
+
+        const response = (error as BadRequestException).getResponse() as {
+          message: string;
+          errors: Array<{ field: string; message: string }>;
+        };
+        const firstError = response.errors[0];
+
+        expect(response.message).toBe('Template variables validation failed');
+        expect(response.errors.length).toBeGreaterThan(0);
+        expect(typeof firstError.field).toBe('string');
+        expect(typeof firstError.message).toBe('string');
+      }
+    });
   });
 
   describe('renderTemplateToImage', () => {
@@ -168,10 +229,18 @@ describe('TemplatesService', () => {
         },
       );
 
-      const result = await service.renderTemplateToImage('tmpl-render-1', {
-        title: 'Hello',
-        count: 2,
-      });
+        await expect(
+          service.renderTemplateToImage('tmpl-render-1', {
+            title: 'Hello',
+            count: 2,
+          }),
+        ).resolves.toEqual(
+          expect.objectContaining({
+            previewUrl: expect.stringMatching(
+              /^https:\/\/deencraft-bucket\.s3\.amazonaws\.com\/templates\/previews\/tmpl-render-1\/.+\.png$/,
+            ),
+          }),
+        );
 
       expect(mockTemplateRendererService.renderHtmlToPng).toHaveBeenCalledWith(
         '<h1>Hello</h1><p>2</p>',
@@ -187,9 +256,9 @@ describe('TemplatesService', () => {
         }),
       );
 
-      expect(result.previewUrl).toMatch(
-        /^https:\/\/deencraft-bucket\.s3\.amazonaws\.com\/templates\/previews\/tmpl-render-1\/.+\.png$/,
-      );
+        expect(mockTemplateRendererService.renderHtmlToPng).toHaveBeenCalledTimes(
+          1,
+        );
     });
 
     it('should throw InternalServerErrorException when renderer or storage is not configured', async () => {
@@ -202,6 +271,34 @@ describe('TemplatesService', () => {
           title: 'Hello',
         }),
       ).rejects.toBeInstanceOf(InternalServerErrorException);
+    });
+
+    it('should fail before renderer when variables do not match schema', async () => {
+      repository.findOne?.mockResolvedValue({
+        id: 'tmpl-render-schema',
+        name: 'Render Template',
+        html: '<h1>{{quote}}</h1><p>{{author}}</p>',
+        variableSchema: {
+          type: 'object',
+          required: ['quote', 'author'],
+          properties: {
+            quote: { type: 'string', maxLength: 20 },
+            author: { type: 'string', maxLength: 10 },
+          },
+        },
+      });
+
+      await expect(
+        service.renderTemplateToImage('tmpl-render-schema', {
+          quote: 'valid quote',
+          author: 123,
+        } as unknown as Record<string, unknown>),
+      ).rejects.toBeInstanceOf(BadRequestException);
+
+      expect(
+        mockTemplateRendererService.renderHtmlToPng,
+      ).not.toHaveBeenCalled();
+      expect(mockStorageProvider.uploadObject).not.toHaveBeenCalled();
     });
   });
 });
