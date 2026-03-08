@@ -12,6 +12,7 @@ import {
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { CreateTemplateDto } from './dto/create-template.dto';
 import { PreviewTemplateDto } from './dto/preview-template.dto';
+import { RenderTemplateDto } from './dto/render-template.dto';
 import { UpdateTemplateDto } from './dto/update-template.dto';
 import { TemplatesService } from './templates.service';
 
@@ -57,5 +58,11 @@ export class TemplatesController {
   @ApiOperation({ summary: 'Render template preview with variables' })
   previewTemplate(@Param('id') id: string, @Body() dto: PreviewTemplateDto) {
     return this.templatesService.previewTemplate(id, dto.variables);
+  }
+
+  @Post(':id/render')
+  @ApiOperation({ summary: 'Render template image and upload to storage' })
+  renderTemplate(@Param('id') id: string, @Body() dto: RenderTemplateDto) {
+    return this.templatesService.renderTemplateToImage(id, dto.variables);
   }
 }
