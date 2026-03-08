@@ -9,6 +9,7 @@ const mockTemplatesService = {
   updateTemplate: jest.fn(),
   deleteTemplate: jest.fn(),
   previewTemplate: jest.fn(),
+  renderTemplateToImage: jest.fn(),
 };
 
 describe('TemplatesController', () => {
@@ -73,6 +74,35 @@ describe('TemplatesController', () => {
       const result = await controller.previewTemplate(id, dto);
 
       expect(mockTemplatesService.previewTemplate).toHaveBeenCalledWith(
+        id,
+        dto.variables,
+      );
+      expect(result).toEqual(serviceResult);
+    });
+  });
+
+  describe('renderTemplate', () => {
+    it('should call TemplatesService.renderTemplateToImage', async () => {
+      const id = 'tmpl-1';
+      const dto = {
+        variables: {
+          title: 'Hello',
+          subtitle: 'World',
+        },
+      };
+
+      const serviceResult = {
+        previewUrl:
+          'https://bucket.s3.amazonaws.com/templates/previews/tmpl-1/example.png',
+      };
+
+      mockTemplatesService.renderTemplateToImage.mockResolvedValue(
+        serviceResult,
+      );
+
+      const result = await controller.renderTemplate(id, dto);
+
+      expect(mockTemplatesService.renderTemplateToImage).toHaveBeenCalledWith(
         id,
         dto.variables,
       );

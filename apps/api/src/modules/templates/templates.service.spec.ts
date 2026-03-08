@@ -1,6 +1,10 @@
 import { Test, TestingModule } from '@nestjs/testing';
+import { ConfigService } from '@nestjs/config';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+import { InternalServerErrorException } from '@nestjs/common';
+import { STORAGE_PROVIDER } from '../storage/storage.constants';
+import { TemplateRendererService } from './template-renderer.service';
 import { Template } from './template.entity';
 import { TemplatesService } from './templates.service';
 
@@ -22,12 +26,36 @@ describe('TemplatesService', () => {
   let service: TemplatesService;
   let repository: MockRepository<Template>;
 
+  const mockConfigService = {
+    get: jest.fn(),
+  };
+
+  const mockTemplateRendererService = {
+    renderHtmlToPng: jest.fn(),
+  };
+
+  const mockStorageProvider = {
+    uploadObject: jest.fn(),
+  };
+
   beforeEach(async () => {
     repository = createMockRepository();
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         TemplatesService,
+        {
+          provide: ConfigService,
+          useValue: mockConfigService,
+        },
+        {
+          provide: TemplateRendererService,
+          useValue: mockTemplateRendererService,
+        },
+        {
+          provide: STORAGE_PROVIDER,
+          useValue: mockStorageProvider,
+        },
         {
           provide: getRepositoryToken(Template),
           useValue: repository,
@@ -36,6 +64,7 @@ describe('TemplatesService', () => {
     }).compile();
 
     service = module.get<TemplatesService>(TemplatesService);
+    jest.clearAllMocks();
   });
 
   it('should be defined', () => {
@@ -112,6 +141,67 @@ describe('TemplatesService', () => {
       });
 
       expect(result.renderedHtml).toBe('<h1>Only Title</h1><p>{{author}}</p>');
+    });
+  });
+
+  describe('renderTemplateToImage', () => {
+    it('should render html to png, upload to storage and return previewUrl', async () => {
+      repository.findOne?.mockResolvedValue({
+        id: 'tmpl-render-1',
+        name: 'Render Template',
+        html: '<h1>{{title}}</h1><p>{{count}}</p>',
+      });
+
+      const pngBuffer = Buffer.from('png-bytes');
+      mockTemplateRendererService.renderHtmlToPng.mockResolvedValue(pngBuffer);
+      mockStorageProvider.uploadObject.mockResolvedValue(undefined);
+
+      mockConfigService.get.mockImplementation(
+        (key: string, defaultValue?: string) => {
+          if (key === 'aws.bucketName' || key === 'AWS_BUCKET_NAME') {
+            return 'deencraft-bucket';
+          }
+          if (key === 'aws.region' || key === 'AWS_REGION') {
+            return 'us-east-1';
+          }
+          return defaultValue;
+        },
+      );
+
+      const result = await service.renderTemplateToImage('tmpl-render-1', {
+        title: 'Hello',
+        count: 2,
+      });
+
+      expect(mockTemplateRendererService.renderHtmlToPng).toHaveBeenCalledWith(
+        '<h1>Hello</h1><p>2</p>',
+      );
+
+      expect(mockStorageProvider.uploadObject).toHaveBeenCalledWith(
+        expect.objectContaining({
+          key: expect.stringMatching(
+            /^templates\/previews\/tmpl-render-1\/.+\.png$/,
+          ),
+          body: pngBuffer,
+          contentType: 'image/png',
+        }),
+      );
+
+      expect(result.previewUrl).toMatch(
+        /^https:\/\/deencraft-bucket\.s3\.amazonaws\.com\/templates\/previews\/tmpl-render-1\/.+\.png$/,
+      );
+    });
+
+    it('should throw InternalServerErrorException when renderer or storage is not configured', async () => {
+      const serviceWithoutDeps = new TemplatesService(
+        repository as unknown as Repository<Template>,
+      );
+
+      await expect(
+        serviceWithoutDeps.renderTemplateToImage('tmpl-missing-deps', {
+          title: 'Hello',
+        }),
+      ).rejects.toBeInstanceOf(InternalServerErrorException);
     });
   });
 });
