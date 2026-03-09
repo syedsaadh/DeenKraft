@@ -249,4 +249,57 @@ export class ReelsController {
   async render(@Param('id') projectId: string): Promise<RenderJob> {
     return this.reelsService.createRenderJob(projectId);
   }
+
+  @Get('render-jobs/:id')
+  @ApiOperation({
+    summary: 'Get render job details',
+    description:
+      'Retrieve a specific render job including status, outputUrl, and errorMessage.',
+  })
+  @ApiParam({ name: 'id', type: 'string', description: 'Render job ID' })
+  @ApiResponse({
+    status: 200,
+    description: 'Render job retrieved successfully',
+    type: RenderJob,
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'Render job not found',
+  })
+  async getRenderJob(@Param('id') id: string): Promise<RenderJob> {
+    return this.reelsService.getRenderJob(id);
+  }
+
+  @Get(':id/render-jobs')
+  @ApiOperation({
+    summary: 'List render jobs for a reel project',
+    description:
+      'Retrieve paginated render jobs for a specific reel project to track rendering progress.',
+  })
+  @ApiParam({ name: 'id', type: 'string', description: 'Reel project ID' })
+  @ApiQuery({ name: 'page', type: 'number', required: false, example: 1 })
+  @ApiQuery({ name: 'limit', type: 'number', required: false, example: 20 })
+  @ApiResponse({
+    status: 200,
+    description: 'Render jobs retrieved successfully',
+    schema: {
+      properties: {
+        items: {
+          type: 'array',
+          items: { $ref: '#/components/schemas/RenderJob' },
+        },
+        total: { type: 'number' },
+        page: { type: 'number' },
+        limit: { type: 'number' },
+        totalPages: { type: 'number' },
+      },
+    },
+  })
+  async listRenderJobs(
+    @Param('id') projectId: string,
+    @Query('page', new ParseIntPipe({ optional: true })) page?: number,
+    @Query('limit', new ParseIntPipe({ optional: true })) limit?: number,
+  ) {
+    return this.reelsService.listRenderJobs(projectId, page, limit);
+  }
 }
