@@ -66,16 +66,11 @@ export class TemplatesController {
     schema: {
       type: 'object',
       properties: {
-        templateId: {
-          type: 'string',
-          description: 'Optional request context copy of :id path param',
-          example: '8d11fb91-a767-4223-b5bb-a9f8147cae28',
-        },
         variables: {
           type: 'object',
           example: {
-            quote: 'Allah is Most Merciful',
-            author: 'Quran 39:53',
+            title: 'Example title',
+            subtitles: 'Example subtitle',
           },
         },
       },
@@ -98,16 +93,11 @@ export class TemplatesController {
     schema: {
       type: 'object',
       properties: {
-        templateId: {
-          type: 'string',
-          description: 'Optional request context copy of :id path param',
-          example: '8d11fb91-a767-4223-b5bb-a9f8147cae28',
-        },
         variables: {
           type: 'object',
           example: {
-            quote: 'Allah is Most Merciful',
-            author: 'Quran 39:53',
+            title: 'Example title',
+            subtitles: 'Example subtitle',
           },
         },
       },
