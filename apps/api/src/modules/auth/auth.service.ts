@@ -5,7 +5,7 @@ import { JwtService } from '@nestjs/jwt';
 export class AuthService {
   constructor(private readonly jwtService: JwtService) {}
 
-  async login() {
+  login() {
     const payload = { sub: 1, username: 'admin' };
 
     return {
