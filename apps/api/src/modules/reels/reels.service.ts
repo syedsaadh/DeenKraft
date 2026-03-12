@@ -8,7 +8,7 @@ import {
 import { RenderJob, type RenderJobStatus } from './entities/render-job.entity';
 import { CreateReelProjectDto } from './dto/create-reel-project.dto';
 import { UpdateReelProjectDto } from './dto/update-reel-project.dto';
-import { ReelRendererService } from './renderer/reel-renderer.service';
+import { ReelsQueueService } from './queue/reels-queue.service';
 
 @Injectable()
 export class ReelsService {
@@ -17,7 +17,7 @@ export class ReelsService {
     private readonly projectRepository: Repository<ReelProject>,
     @InjectRepository(RenderJob)
     private readonly renderJobRepository: Repository<RenderJob>,
-    private readonly reelRendererService: ReelRendererService,
+    private readonly reelsQueueService: ReelsQueueService,
   ) {}
 
   async createProject(
@@ -33,12 +33,8 @@ export class ReelsService {
     return this.projectRepository.save(project);
   }
 
-  async getProject(id: string): Promise<ReelProject> {
-    const project = await this.projectRepository.findOne({ where: { id } });
-    if (!project) {
-      throw new NotFoundException('Reel project not found');
-    }
-    return project;
+  async getProject(id: string, userId: string): Promise<ReelProject> {
+    return this.getOwnedProjectOrFail(id, userId);
   }
 
   async listProjects(userId: string, page = 1, limit = 20) {
@@ -63,9 +59,10 @@ export class ReelsService {
 
   async updateProject(
     id: string,
+    userId: string,
     dto: UpdateReelProjectDto,
   ): Promise<ReelProject> {
-    const project = await this.getProject(id);
+    const project = await this.getOwnedProjectOrFail(id, userId);
     const merged = this.projectRepository.merge(project, {
       name: dto.name,
       timeline: dto.timeline,
@@ -73,14 +70,17 @@ export class ReelsService {
     return this.projectRepository.save(merged);
   }
 
-  async deleteProject(id: string): Promise<{ deleted: boolean; id: string }> {
-    await this.getProject(id);
+  async deleteProject(
+    id: string,
+    userId: string,
+  ): Promise<{ deleted: boolean; id: string }> {
+    await this.getOwnedProjectOrFail(id, userId);
     await this.projectRepository.delete({ id });
     return { deleted: true, id };
   }
 
-  async createRenderJob(projectId: string): Promise<RenderJob> {
-    const project = await this.getProject(projectId);
+  async createRenderJob(projectId: string, userId: string): Promise<RenderJob> {
+    const project = await this.getOwnedProjectOrFail(projectId, userId);
 
     const renderJob = this.renderJobRepository.create({
       projectId: project.id,
@@ -94,20 +94,33 @@ export class ReelsService {
       { status: 'rendering' as ReelProjectStatus },
     );
 
-    void this.reelRendererService.processRenderJob(savedJob.id);
+    await this.reelsQueueService.enqueueRenderJob({
+      renderJobId: savedJob.id,
+      projectId: project.id,
+    });
 
     return savedJob;
   }
 
-  async getRenderJob(id: string): Promise<RenderJob> {
+  async getRenderJob(id: string, userId: string): Promise<RenderJob> {
     const job = await this.renderJobRepository.findOne({ where: { id } });
     if (!job) {
       throw new NotFoundException('Render job not found');
     }
+
+    await this.getOwnedProjectOrFail(job.projectId, userId);
+
     return job;
   }
 
-  async listRenderJobs(projectId: string, page = 1, limit = 20) {
+  async listRenderJobs(
+    projectId: string,
+    userId: string,
+    page = 1,
+    limit = 20,
+  ) {
+    await this.getOwnedProjectOrFail(projectId, userId);
+
     const safePage = Math.max(1, page);
     const safeLimit = Math.max(1, Math.min(100, limit));
 
@@ -125,5 +138,19 @@ export class ReelsService {
       limit: safeLimit,
       totalPages: Math.ceil(total / safeLimit),
     };
+  }
+
+  private async getOwnedProjectOrFail(
+    id: string,
+    userId: string,
+  ): Promise<ReelProject> {
+    const project = await this.projectRepository.findOne({
+      where: { id, userId },
+    });
+    if (!project) {
+      throw new NotFoundException('Reel project not found');
+    }
+
+    return project;
   }
 }

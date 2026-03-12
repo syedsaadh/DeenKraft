@@ -145,8 +145,12 @@ export class ReelsController {
     status: 404,
     description: 'Reel project not found',
   })
-  async get(@Param('id') id: string): Promise<ReelProject> {
-    return this.reelsService.getProject(id);
+  async get(
+    @Request() req: AuthenticatedRequest,
+    @Param('id') id: string,
+  ): Promise<ReelProject> {
+    const userId = String(req.user.userId);
+    return this.reelsService.getProject(id, userId);
   }
 
   @Patch(':id')
@@ -184,10 +188,12 @@ export class ReelsController {
     description: 'Reel project not found',
   })
   async update(
+    @Request() req: AuthenticatedRequest,
     @Param('id') id: string,
     @Body() dto: UpdateReelProjectDto,
   ): Promise<ReelProject> {
-    return this.reelsService.updateProject(id, dto);
+    const userId = String(req.user.userId);
+    return this.reelsService.updateProject(id, userId, dto);
   }
 
   @Delete(':id')
@@ -211,8 +217,9 @@ export class ReelsController {
     status: 404,
     description: 'Reel project not found',
   })
-  async delete(@Param('id') id: string) {
-    return this.reelsService.deleteProject(id);
+  async delete(@Request() req: AuthenticatedRequest, @Param('id') id: string) {
+    const userId = String(req.user.userId);
+    return this.reelsService.deleteProject(id, userId);
   }
 
   @Post(':id/render')
@@ -246,8 +253,12 @@ export class ReelsController {
     status: 404,
     description: 'Reel project not found',
   })
-  async render(@Param('id') projectId: string): Promise<RenderJob> {
-    return this.reelsService.createRenderJob(projectId);
+  async render(
+    @Request() req: AuthenticatedRequest,
+    @Param('id') projectId: string,
+  ): Promise<RenderJob> {
+    const userId = String(req.user.userId);
+    return this.reelsService.createRenderJob(projectId, userId);
   }
 
   @Get('render-jobs/:id')
@@ -266,8 +277,12 @@ export class ReelsController {
     status: 404,
     description: 'Render job not found',
   })
-  async getRenderJob(@Param('id') id: string): Promise<RenderJob> {
-    return this.reelsService.getRenderJob(id);
+  async getRenderJob(
+    @Request() req: AuthenticatedRequest,
+    @Param('id') id: string,
+  ): Promise<RenderJob> {
+    const userId = String(req.user.userId);
+    return this.reelsService.getRenderJob(id, userId);
   }
 
   @Get(':id/render-jobs')
@@ -296,10 +311,12 @@ export class ReelsController {
     },
   })
   async listRenderJobs(
+    @Request() req: AuthenticatedRequest,
     @Param('id') projectId: string,
     @Query('page', new ParseIntPipe({ optional: true })) page?: number,
     @Query('limit', new ParseIntPipe({ optional: true })) limit?: number,
   ) {
-    return this.reelsService.listRenderJobs(projectId, page, limit);
+    const userId = String(req.user.userId);
+    return this.reelsService.listRenderJobs(projectId, userId, page, limit);
   }
 }
