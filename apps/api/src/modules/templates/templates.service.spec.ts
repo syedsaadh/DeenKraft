@@ -169,7 +169,7 @@ describe('TemplatesService', () => {
     });
 
     it('should throw structured errors for invalid variable structure', async () => {
-      expect.assertions(4);
+      expect.assertions(5);
 
       repository.findOne?.mockResolvedValue({
         id: 'tmpl-validation-2',
@@ -229,36 +229,40 @@ describe('TemplatesService', () => {
         },
       );
 
-        await expect(
-          service.renderTemplateToImage('tmpl-render-1', {
-            title: 'Hello',
-            count: 2,
-          }),
-        ).resolves.toEqual(
-          expect.objectContaining({
-            previewUrl: expect.stringMatching(
-              /^https:\/\/deencraft-bucket\.s3\.amazonaws\.com\/templates\/previews\/tmpl-render-1\/.+\.png$/,
-            ),
-          }),
-        );
+      const renderResult = await service.renderTemplateToImage(
+        'tmpl-render-1',
+        {
+          title: 'Hello',
+          count: 2,
+        },
+      );
+
+      expect(renderResult.previewUrl).toMatch(
+        /^https:\/\/deencraft-bucket\.s3\.amazonaws\.com\/templates\/previews\/tmpl-render-1\/.+\.png$/,
+      );
 
       expect(mockTemplateRendererService.renderHtmlToPng).toHaveBeenCalledWith(
         '<h1>Hello</h1><p>2</p>',
       );
 
-      expect(mockStorageProvider.uploadObject).toHaveBeenCalledWith(
-        expect.objectContaining({
-          key: expect.stringMatching(
-            /^templates\/previews\/tmpl-render-1\/.+\.png$/,
-          ),
-          body: pngBuffer,
-          contentType: 'image/png',
-        }),
-      );
+      const uploadCalls = mockStorageProvider.uploadObject.mock
+        .calls as unknown[][];
+      const uploadCallArg = uploadCalls[0]?.[0] as {
+        key: string;
+        body: Buffer;
+        contentType: string;
+      };
 
-        expect(mockTemplateRendererService.renderHtmlToPng).toHaveBeenCalledTimes(
-          1,
-        );
+      expect(uploadCallArg).toBeDefined();
+      expect(uploadCallArg.key).toMatch(
+        /^templates\/previews\/tmpl-render-1\/.+\.png$/,
+      );
+      expect(uploadCallArg.body).toEqual(pngBuffer);
+      expect(uploadCallArg.contentType).toBe('image/png');
+
+      expect(mockTemplateRendererService.renderHtmlToPng).toHaveBeenCalledTimes(
+        1,
+      );
     });
 
     it('should throw InternalServerErrorException when renderer or storage is not configured', async () => {
