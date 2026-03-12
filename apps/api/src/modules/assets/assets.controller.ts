@@ -81,13 +81,11 @@ export class AssetsController {
   })
   @UseInterceptors(
     FileInterceptor('file', {
-      limits: { fileSize: 25 * 1024 * 1024 },
+      limits: { fileSize: 200 * 1024 * 1024 },
       fileFilter: (_request, file, callback) => {
         if (!ALLOWED_MIME_TYPES.has(file.mimetype)) {
           callback(
-            new BadRequestException(
-              `Unsupported file type: ${file.mimetype}`,
-            ),
+            new BadRequestException(`Unsupported file type: ${file.mimetype}`),
             false,
           );
           return;

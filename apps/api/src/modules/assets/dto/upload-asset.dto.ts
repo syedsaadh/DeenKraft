@@ -32,7 +32,8 @@ export class UploadAssetDto {
 
   @ApiPropertyOptional({
     type: [Number],
-    description: 'Optional tag ids; supports comma-separated string or repeated fields.',
+    description:
+      'Optional tag ids; supports comma-separated string or repeated fields.',
     example: [1, 2, 3],
   })
   @IsOptional()

@@ -126,7 +126,11 @@ export class AssetsService {
     return this.findOwnedAssetOrFail(assetId, userId);
   }
 
-  async updateAssetEntry(assetId: number, userId: number, dto: UpdateAssetEntryDto) {
+  async updateAssetEntry(
+    assetId: number,
+    userId: number,
+    dto: UpdateAssetEntryDto,
+  ) {
     const asset = await this.findOwnedAssetOrFail(assetId, userId);
 
     if (dto.name) {
@@ -157,7 +161,9 @@ export class AssetsService {
     const asset = await this.findOwnedAssetOrFail(assetId, userId);
 
     if (query.mode === 'stream') {
-      const stream = await this.storageProvider.getObjectStream(asset.storageKey);
+      const stream = await this.storageProvider.getObjectStream(
+        asset.storageKey,
+      );
 
       return {
         mode: 'stream',
@@ -198,7 +204,9 @@ export class AssetsService {
     }
 
     const uniqueTagIds = Array.from(new Set(tagIds));
-    const tags = await this.tagRepository.find({ where: { id: In(uniqueTagIds) } });
+    const tags = await this.tagRepository.find({
+      where: { id: In(uniqueTagIds) },
+    });
 
     if (tags.length !== uniqueTagIds.length) {
       throw new BadRequestException('One or more tagIds are invalid');
