@@ -8,6 +8,7 @@ import {
 import { RenderJob, type RenderJobStatus } from './entities/render-job.entity';
 import { CreateReelProjectDto } from './dto/create-reel-project.dto';
 import { UpdateReelProjectDto } from './dto/update-reel-project.dto';
+import { ReelRendererService } from './renderer/reel-renderer.service';
 
 @Injectable()
 export class ReelsService {
@@ -16,6 +17,7 @@ export class ReelsService {
     private readonly projectRepository: Repository<ReelProject>,
     @InjectRepository(RenderJob)
     private readonly renderJobRepository: Repository<RenderJob>,
+    private readonly reelRendererService: ReelRendererService,
   ) {}
 
   async createProject(
@@ -91,6 +93,8 @@ export class ReelsService {
       { id: projectId },
       { status: 'rendering' as ReelProjectStatus },
     );
+
+    void this.reelRendererService.processRenderJob(savedJob.id);
 
     return savedJob;
   }
