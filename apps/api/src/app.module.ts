@@ -7,6 +7,8 @@ import { AuthModule } from './modules/auth/auth.module';
 import { AssetsModule } from './modules/assets/assets.module';
 import { TagsModule } from './modules/tags/tags.module';
 import { StorageModule } from './modules/storage/storage.module';
+import { TemplatesModule } from './modules/templates/templates.module';
+import { ReelsModule } from './modules/reels/reels.module';
 
 @Module({
   imports: [
@@ -23,6 +25,8 @@ import { StorageModule } from './modules/storage/storage.module';
     AssetsModule,
     TagsModule,
     StorageModule,
+    TemplatesModule,
+    ReelsModule,
   ],
 })
 export class AppModule {}
