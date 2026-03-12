@@ -17,13 +17,13 @@ export class S3StorageService implements StorageProvider {
   private readonly bucketName: string;
 
   constructor(private readonly configService: ConfigService) {
-    const region = this.configService.get<string>('aws.region') ?? this.configService.get<string>('AWS_REGION', 'us-east-1');
-    const accessKeyId = this.configService.get<string>('aws.accessKeyId') ?? this.configService.get<string>('AWS_ACCESS_KEY_ID', '');
-    const secretAccessKey =
-      this.configService.get<string>('aws.secretAccessKey') ?? this.configService.get<string>('AWS_SECRET_ACCESS_KEY', '');
-
-    this.bucketName =
-      this.configService.get<string>('aws.bucketName') ?? this.configService.get<string>('AWS_BUCKET_NAME', '');
+    const region = this.configService.get<string>('AWS_REGION', 'us-east-1');
+    const accessKeyId = this.configService.get<string>('AWS_ACCESS_KEY_ID', '');
+    const secretAccessKey = this.configService.get<string>(
+      'AWS_SECRET_ACCESS_KEY',
+      '',
+    );
+    this.bucketName = this.configService.get<string>('AWS_BUCKET_NAME', '');
 
     this.s3Client = new S3Client({
       region,
@@ -36,7 +36,9 @@ export class S3StorageService implements StorageProvider {
 
   async uploadObject(input: UploadObjectInput): Promise<void> {
     if (!this.bucketName) {
-      throw new InternalServerErrorException('AWS_BUCKET_NAME is not configured');
+      throw new InternalServerErrorException(
+        'AWS_BUCKET_NAME is not configured',
+      );
     }
 
     await this.s3Client.send(
@@ -51,7 +53,9 @@ export class S3StorageService implements StorageProvider {
 
   async deleteObject(key: string): Promise<void> {
     if (!this.bucketName) {
-      throw new InternalServerErrorException('AWS_BUCKET_NAME is not configured');
+      throw new InternalServerErrorException(
+        'AWS_BUCKET_NAME is not configured',
+      );
     }
 
     await this.s3Client.send(
@@ -67,7 +71,9 @@ export class S3StorageService implements StorageProvider {
     expiresInSeconds = 3600,
   ): Promise<string> {
     if (!this.bucketName) {
-      throw new InternalServerErrorException('AWS_BUCKET_NAME is not configured');
+      throw new InternalServerErrorException(
+        'AWS_BUCKET_NAME is not configured',
+      );
     }
 
     return getSignedUrl(
@@ -82,7 +88,9 @@ export class S3StorageService implements StorageProvider {
 
   async objectExists(key: string): Promise<boolean> {
     if (!this.bucketName) {
-      throw new InternalServerErrorException('AWS_BUCKET_NAME is not configured');
+      throw new InternalServerErrorException(
+        'AWS_BUCKET_NAME is not configured',
+      );
     }
 
     try {
@@ -100,7 +108,9 @@ export class S3StorageService implements StorageProvider {
 
   async getObjectStream(key: string): Promise<Readable> {
     if (!this.bucketName) {
-      throw new InternalServerErrorException('AWS_BUCKET_NAME is not configured');
+      throw new InternalServerErrorException(
+        'AWS_BUCKET_NAME is not configured',
+      );
     }
 
     const response = await this.s3Client.send(
