@@ -17,8 +17,8 @@ export class Asset {
   id: number;
 
   @ApiProperty()
-  @Column()
-  userId: number;
+  @Column({ type: 'varchar', length: 36 })
+  userId: string;
 
   @ApiProperty()
   @Column()

@@ -9,6 +9,9 @@ import { TagsModule } from './modules/tags/tags.module';
 import { StorageModule } from './modules/storage/storage.module';
 import { TemplatesModule } from './modules/templates/templates.module';
 import { ReelsModule } from './modules/reels/reels.module';
+import { CarouselTemplatesModule } from './modules/carousel-templates/carousel-templates.module';
+import { CarouselsModule } from './modules/carousels/carousels.module';
+import { UploadsModule } from './modules/uploads/uploads.module';
 
 @Module({
   imports: [
@@ -27,6 +30,9 @@ import { ReelsModule } from './modules/reels/reels.module';
     StorageModule,
     TemplatesModule,
     ReelsModule,
+    CarouselTemplatesModule,
+    CarouselsModule,
+    UploadsModule,
   ],
 })
 export class AppModule {}

@@ -10,7 +10,7 @@ import {
 @Injectable()
 export class ReelsQueueService implements OnModuleDestroy {
   private readonly queueName: string;
-  private readonly queue: Queue;
+  private queue: Queue | null = null;
   private readonly retryAttempts: number;
   private readonly retryBackoffMs: number;
 
@@ -20,12 +20,6 @@ export class ReelsQueueService implements OnModuleDestroy {
       DEFAULT_RENDER_QUEUE_NAME,
     );
 
-    const redisHost = this.configService.get<string>('REDIS_HOST', '127.0.0.1');
-    const redisPort = Number(
-      this.configService.get<string>('REDIS_PORT', '6379'),
-    );
-    const redisDb = Number(this.configService.get<string>('REDIS_DB', '0'));
-    const redisPassword = this.configService.get<string>('REDIS_PASSWORD');
     const rawAttempts = Number(
       this.configService.get<string>('RENDER_JOB_RETRY_ATTEMPTS', '5'),
     );
@@ -35,20 +29,36 @@ export class ReelsQueueService implements OnModuleDestroy {
 
     this.retryAttempts = Math.max(1, Math.min(10, rawAttempts));
     this.retryBackoffMs = Math.max(250, rawBackoffMs);
+  }
 
-    this.queue = new Queue(this.queueName, {
-      connection: {
-        host: redisHost,
-        port: redisPort,
-        db: redisDb,
-        password: redisPassword,
-        maxRetriesPerRequest: null,
-      },
-    });
+  private getQueue(): Queue {
+    if (!this.queue) {
+      const redisHost = this.configService.get<string>(
+        'REDIS_HOST',
+        '127.0.0.1',
+      );
+      const redisPort = Number(
+        this.configService.get<string>('REDIS_PORT', '6379'),
+      );
+      const redisDb = Number(this.configService.get<string>('REDIS_DB', '0'));
+      const redisPassword = this.configService.get<string>('REDIS_PASSWORD');
+
+      this.queue = new Queue(this.queueName, {
+        connection: {
+          host: redisHost,
+          port: redisPort,
+          db: redisDb,
+          password: redisPassword,
+          maxRetriesPerRequest: null,
+        },
+      });
+    }
+
+    return this.queue;
   }
 
   async enqueueRenderJob(payload: RenderQueueJobPayload): Promise<void> {
-    await this.queue.add(RENDER_JOB_NAME, payload, {
+    await this.getQueue().add(RENDER_JOB_NAME, payload, {
       attempts: this.retryAttempts,
       backoff: {
         type: 'exponential',
@@ -61,9 +71,10 @@ export class ReelsQueueService implements OnModuleDestroy {
 
   async getQueueHealth() {
     try {
-      const client = await this.queue.client;
+      const queue = this.getQueue();
+      const client = await queue.client;
       const pingResponse = await client.ping();
-      const counts = await this.queue.getJobCounts(
+      const counts = await queue.getJobCounts(
         'active',
         'waiting',
         'delayed',
@@ -103,6 +114,8 @@ export class ReelsQueueService implements OnModuleDestroy {
   }
 
   async onModuleDestroy(): Promise<void> {
-    await this.queue.close();
+    if (this.queue) {
+      await this.queue.close();
+    }
   }
 }

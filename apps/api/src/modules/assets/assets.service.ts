@@ -51,7 +51,7 @@ export class AssetsService {
 
   async uploadAndCreateAsset(
     file: Express.Multer.File,
-    userId: number,
+    userId: string,
     dto: UploadAssetDto,
   ) {
     if (!file || !file.buffer || file.size === 0) {
@@ -88,7 +88,7 @@ export class AssetsService {
     return this.assetRepository.save(asset);
   }
 
-  async createAssetEntry(userId: number, dto: CreateAssetEntryDto) {
+  async createAssetEntry(userId: string, dto: CreateAssetEntryDto) {
     const tags = await this.resolveTags(dto.tagIds);
 
     const asset = this.assetRepository.create({
@@ -104,7 +104,7 @@ export class AssetsService {
     return this.assetRepository.save(asset);
   }
 
-  async getAllAssets(userId: number, query: ListAssetsDto) {
+  async getAllAssets(userId: string, query: ListAssetsDto) {
     const [items, total] = await this.assetRepository.findAndCount({
       where: { userId },
       relations: ['tags'],
@@ -122,13 +122,13 @@ export class AssetsService {
     };
   }
 
-  async getAssetById(assetId: number, userId: number) {
+  async getAssetById(assetId: number, userId: string) {
     return this.findOwnedAssetOrFail(assetId, userId);
   }
 
   async updateAssetEntry(
     assetId: number,
-    userId: number,
+    userId: string,
     dto: UpdateAssetEntryDto,
   ) {
     const asset = await this.findOwnedAssetOrFail(assetId, userId);
@@ -144,7 +144,7 @@ export class AssetsService {
     return this.assetRepository.save(asset);
   }
 
-  async removeAssetEntry(assetId: number, userId: number) {
+  async removeAssetEntry(assetId: number, userId: string) {
     const asset = await this.findOwnedAssetOrFail(assetId, userId);
 
     await this.storageProvider.deleteObject(asset.storageKey);
@@ -155,7 +155,7 @@ export class AssetsService {
 
   async getResourceByAssetId(
     assetId: number,
-    userId: number,
+    userId: string,
     query: GetResourceDto,
   ): Promise<StreamAssetResult | PresignedAssetResult> {
     const asset = await this.findOwnedAssetOrFail(assetId, userId);
@@ -185,7 +185,7 @@ export class AssetsService {
     };
   }
 
-  private async findOwnedAssetOrFail(assetId: number, userId: number) {
+  private async findOwnedAssetOrFail(assetId: number, userId: string) {
     const asset = await this.assetRepository.findOne({
       where: { id: assetId, userId },
       relations: ['tags'],
@@ -252,7 +252,7 @@ export class AssetsService {
     }
   }
 
-  private generateStorageKey(userId: number, originalName: string) {
+  private generateStorageKey(userId: string, originalName: string) {
     const extension = extname(originalName) || '';
     const filename = `${randomUUID()}${extension}`;
     const datePrefix = new Date().toISOString().slice(0, 10);
